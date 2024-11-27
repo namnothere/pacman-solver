@@ -41,8 +41,6 @@ class Solver:
     def greedy(self):
         initial_state = self.grid.copy()
         raw_state = initial_state.copy()
-
-        # replace player with FLOOR
         raw_state[raw_state == PLAYER_ANOTATION] = FLOOR
 
         pellets_map = self.pellet_map.copy()
@@ -61,7 +59,6 @@ class Solver:
         heapq.heappush(open_list, (self.greedy_heuristic(current_pos, pellets_map), current_pos, initial_state, [[int(current_pos[0]), int(current_pos[1])]]))
         
         visited = set()        
-        # path = []
         
         while open_list and remaining_targets:
             _, current_pos, current_state, path = heapq.heappop(open_list)
@@ -80,13 +77,6 @@ class Solver:
             if not remaining_targets:
                 print(f"All targets reached: {reached_targets}")
                 return path + [[int(current_pos[0]), int(current_pos[1])]]
-
-            # if current_pos in visited:
-            #     print(f"Already visited {current_pos}. Skipping...")
-            #     continue
-            # elif current_pos not in visited:
-            #     # path.append([int(current_pos[0]), int(current_pos[1])])
-            #     visited.add(current_pos)
 
             available_directions = get_available_directions(current_state)
             if not available_directions:
@@ -107,7 +97,6 @@ class Solver:
         else:
             print(f"Not all targets reached. Remaining: {remaining_targets}")
             return None
-
 
     def greedy_heuristic(self, current_pos, remaining_pellets: list):
         if not remaining_pellets:
