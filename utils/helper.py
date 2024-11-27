@@ -1,7 +1,9 @@
-from enum import Enum
+import hashlib
 import numpy as np
 
-BOARD_SIZE = 25
+from enum import Enum
+
+from utils.constants import BOARD_SIZE, PLAYER_ANOTATION, WALL
 
 class ALGO(Enum):
     BFS = 0
@@ -9,6 +11,7 @@ class ALGO(Enum):
     ID = 2
     UCS = 3
     HC = 4
+    GBFS = 5
 
 def direction_to_string(direction):
     if direction == (-1, 0):
@@ -21,12 +24,25 @@ def direction_to_string(direction):
         return "Left"
     else:
         return "Invalid direction"
-    
 
 def get_available_directions(state: list[list]):
     available_directions = []
-    empty_cell = np.where(state == 0)
+    empty_cell = np.where(state == PLAYER_ANOTATION)
     for i, j in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-        if empty_cell[0] + i >= 0 and empty_cell[0] + i < BOARD_SIZE and empty_cell[1] + j >= 0 and empty_cell[1] + j < BOARD_SIZE:
+        next_pos = (empty_cell[0] + i, empty_cell[1] + j)
+        if next_pos[0] >= 0 and next_pos[0] < BOARD_SIZE and next_pos[1] >= 0 and next_pos[1] < BOARD_SIZE:
+            if state[next_pos[0], next_pos[1]] == WALL: continue
             available_directions.append((i, j))
     return available_directions
+
+def state2hash(state):
+    return hashlib.md5(str(state).encode()).hexdigest()
+
+def swap(state: np.ndarray, empty_cell: tuple, new_cell: tuple):
+    empty_cell_val = state[empty_cell[0], empty_cell[1]]
+    new_cell_val = state[new_cell[0], new_cell[1]]
+
+    state[empty_cell] = new_cell_val
+    state[new_cell] = empty_cell_val
+
+    return state
