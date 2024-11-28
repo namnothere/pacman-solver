@@ -45,11 +45,8 @@ async def solve(puzzle: PuzzleInput):
     algo = puzzle.algo
 
     try:
-        solution = Solver(tile_map, pellet_map, start_position).collect_all_pellets(algo)
-
-        return {
-            "solution": solution
-        }
+        res = Solver(tile_map, pellet_map, start_position).collect_all_pellets(algo)
+        return res
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -65,7 +62,7 @@ async def test():
     pellet_map = [(7,2)]
 
     solver = Solver(grid, pellet_map, start_position)
-    collected_paths = solver.greedy()
+    collected_paths = solver.ucs()
 
     print("Collect all pellets path")
     for path in collected_paths:

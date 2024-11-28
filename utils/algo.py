@@ -7,15 +7,17 @@ from utils.constants import FLOOR, PLAYER_ANOTATION
 from utils.helper import ALGO, direction_to_string, get_available_directions, state2hash, swap
 
 def measure_runtime(func):
-  def wrapper(*args, **kwargs):
-      start_time = time.time()
-      result = func(*args, **kwargs)
-      end_time = time.time()
-      
-      run_time = end_time - start_time
-      print(f"Function {func.__name__} executed in {run_time:.4f} seconds")
-      return result
-  return wrapper
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        
+        run_time = end_time - start_time
+        print(f"Function {func.__name__} executed in {run_time:.4f} seconds")
+        if type(result) == dict:
+            result["runtime"] = run_time
+        return result
+    return wrapper
 
 class Solver:
     def __init__(self, grid: list[list], pellet_map: list[list], start: tuple):
@@ -34,6 +36,8 @@ class Solver:
             return self.bfs(self.grid, self.pellet_map, self.start)
         if algo == ALGO.GBFS:
             return self.greedy()
+        if algo == ALGO.UCS:
+            return self.ucs()
         else:
             raise ValueError("Invalid algorithm")
 
@@ -158,8 +162,72 @@ class Solver:
                 remaining_targets.remove(closest_target)
 
         path = [[int(pos[0]), int(pos[1])] for pos in path]
+        print(f"Collect all pellets path: {path}")
+        return {
+            "solution": path
+        }
 
-        return path
+    @measure_runtime
+    def ucs(self):
+        initial_state = self.grid.copy()
+        pellet_map = self.pellet_map.copy()
+        player_pos = self.get_player_coords(initial_state)
+        
+        total_path = []
+        unreachable_targets = []
+        remaining_targets = set(pellet_map)
+        
+        print("UCS")
+        while remaining_targets:
+            open_list = []
+            heapq.heappush(open_list, (0, player_pos, [player_pos]))
+            
+            visited = set()
+            visited.add(player_pos)
+            
+            found_path = False
+
+            while open_list:
+                current_cost, current_pos, current_path = heapq.heappop(open_list)
+
+                if current_pos in remaining_targets:
+                    total_path.extend(current_path[1:])
+                    player_pos = current_pos
+                    remaining_targets.remove(current_pos)
+                    found_path = True
+                    break
+
+                for neighbor in get_available_directions(initial_state, current_pos):
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        new_cost = current_cost + 1
+                        new_path = current_path + [neighbor]
+                        heapq.heappush(open_list, (new_cost, neighbor, new_path))
+            
+            if not found_path:
+                unreachable_targets.append(player_pos)
+                break
+
+        if unreachable_targets:
+            unreachable_targets_str = ', '.join([str(t) for t in unreachable_targets])
+            print({'unreachable_targets': unreachable_targets_str, 'solution': total_path})
+            total_path = [[int(pos[0]), int(pos[1])] for pos in total_path]
+            return {
+                'unreachable_targets': unreachable_targets_str,
+                'solution': total_path
+            }
+        
+        # return {
+        #     'unreachable_targets': None,
+        #     'solution': total_path
+        # }
+        total_path = [[int(pos[0]), int(pos[1])] for pos in total_path]
+        # return total_path
+        return {
+            'unreachable_targets': None,
+            'solution': total_path
+        }
+
 
 if __name__ == "__main__":
     grid = [
