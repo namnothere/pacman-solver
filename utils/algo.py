@@ -282,11 +282,7 @@ class Solver:
             "solution": path
         }
     def a_star_heuristic(self, current, target):
-        """
-        Heuristic for A* that calculates Manhattan distance between current position and target.
-        """
         return abs(current[0] - target[0]) + abs(current[1] - target[1])
-
 
 if __name__ == "__main__":
     grid = [
