@@ -38,6 +38,8 @@ class Solver:
             return self.greedy()
         if algo == ALGO.UCS:
             return self.ucs()
+        if algo == ALGO.ASTAR:
+            return self.a_star()
         else:
             raise ValueError("Invalid algorithm")
 
@@ -227,7 +229,60 @@ class Solver:
             'unreachable_targets': None,
             'solution': total_path
         }
+    @measure_runtime
+    def a_star(self):
+        initial_state = self.grid.copy()
+        pellet_map = self.pellet_map.copy()
+        player_pos = self.get_player_coords(initial_state)
+        remaining_targets = set(pellet_map)
+        path = []
 
+        while remaining_targets:
+            closest_target = min(remaining_targets, key=lambda t: self.a_star_heuristic(player_pos, t))
+            open_list = [(0 + self.a_star_heuristic(player_pos, closest_target), 0, player_pos, [])]  # (f, g, current_pos, path)
+            came_from = {player_pos: None}
+            visited = set()
+
+            while open_list:
+                f, g, current_pos, current_path = heapq.heappop(open_list)
+
+                if current_pos in visited:
+                    continue
+                visited.add(current_pos)
+
+                # If we reach the target, reconstruct the path
+                if current_pos == closest_target:
+                    print(f"Target {closest_target} reached!")
+                    temp_pos = current_pos
+                    target_path = []
+                    while temp_pos:
+                        target_path.append(temp_pos)
+                        temp_pos = came_from[temp_pos]
+                    target_path.reverse()
+                    path.extend(target_path[1:])
+                    player_pos = closest_target
+                    remaining_targets.remove(current_pos)
+                    break
+
+                # Explore neighbors
+                for next_pos in get_available_directions(initial_state, current_pos):
+                    if next_pos not in visited:
+                        new_g = g + 1  # Uniform cost of 1 for each step
+                        heapq.heappush(open_list, (
+                            new_g + self.a_star_heuristic(next_pos, closest_target),  # f = g + h
+                            new_g,
+                            next_pos,
+                            current_path + [current_pos]
+                        ))
+                        came_from[next_pos] = current_pos
+
+        path = [[int(pos[0]), int(pos[1])] for pos in path]
+        print(f"A* path to collect all pellets: {path}")
+        return {
+            "solution": path
+        }
+    def a_star_heuristic(self, current, target):
+        return abs(current[0] - target[0]) + abs(current[1] - target[1])
 
 if __name__ == "__main__":
     grid = [
