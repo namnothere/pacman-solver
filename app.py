@@ -62,7 +62,7 @@ async def test():
     pellet_map = [(7,2)]
 
     solver = Solver(grid, pellet_map, start_position)
-    collected_paths = solver.dfs()
+    collected_paths = solver.a_star()
 
     print("Collect all pellets path")
     for path in collected_paths:
