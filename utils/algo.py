@@ -33,7 +33,9 @@ class Solver:
     
     def collect_all_pellets(self, algo: ALGO.BFS):
         if algo == ALGO.BFS:
-            return self.bfs(self.grid, self.pellet_map, self.start)
+            return self.bfs()
+        if algo == ALGO.DFS:
+            return self.dfs()
         if algo == ALGO.GBFS:
             return self.greedy()
         if algo == ALGO.UCS:
@@ -283,6 +285,63 @@ class Solver:
         }
     def a_star_heuristic(self, current, target):
         return abs(current[0] - target[0]) + abs(current[1] - target[1])
+
+@measure_runtime
+def bfs(self):
+    initial_state = self.grid.copy()
+    pellet_map = self.pellet_map.copy()
+    player_pos = self.get_player_coords(initial_state)
+    
+    queue = deque([(player_pos, [])])
+    visited = set()
+    visited.add(player_pos)
+    path = []
+
+    while queue:
+        current_pos, current_path = queue.popleft()
+
+        if current_pos in pellet_map:
+            pellet_map.remove(current_pos)
+            path.extend(current_path + [current_pos])
+            if not pellet_map:
+                break
+
+        for neighbor in get_available_directions(initial_state, current_pos):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, current_path + [neighbor]))
+    
+    path = [[int(pos[0]), int(pos[1])] for pos in path]
+    return {"solution": path}
+
+@measure_runtime
+def dfs(self):
+    initial_state = self.grid.copy()
+    pellet_map = self.pellet_map.copy()
+    player_pos = self.get_player_coords(initial_state)
+    
+    stack = [(player_pos, [])]
+    visited = set()
+    visited.add(player_pos)
+    path = []
+
+    while stack:
+        current_pos, current_path = stack.pop()
+
+        if current_pos in pellet_map:
+            pellet_map.remove(current_pos)
+            path.extend(current_path + [current_pos])
+            if not pellet_map:
+                break
+
+        for neighbor in get_available_directions(initial_state, current_pos):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                stack.append((neighbor, current_path + [neighbor]))
+    
+    path = [[int(pos[0]), int(pos[1])] for pos in path]
+    return {"solution": path}
+
 
 if __name__ == "__main__":
     grid = [
