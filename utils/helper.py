@@ -12,6 +12,7 @@ class ALGO(Enum):
     UCS = 3
     HC = 4
     GBFS = 5
+    ASTAR = 6
 
 def direction_to_string(direction):
     if direction == (-1, 0):
