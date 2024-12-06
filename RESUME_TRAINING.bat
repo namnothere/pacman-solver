@@ -1,0 +1,1 @@
+python stable_baselines3_example.py --timesteps=100_000 --resume_model_path=model.zip --inference
