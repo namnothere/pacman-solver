@@ -241,7 +241,7 @@ class Solver:
 
         while remaining_targets:
             closest_target = min(remaining_targets, key=lambda t: self.a_star_heuristic(player_pos, t))
-            open_list = [(0 + self.a_star_heuristic(player_pos, closest_target), 0, player_pos, [])]  # (f, g, current_pos, path)
+            open_list = [(0 + self.a_star_heuristic(player_pos, closest_target), 0, player_pos, [])]  
             came_from = {player_pos: None}
             visited = set()
 
@@ -252,7 +252,6 @@ class Solver:
                     continue
                 visited.add(current_pos)
 
-                # If we reach the target, reconstruct the path
                 if current_pos == closest_target:
                     print(f"Target {closest_target} reached!")
                     temp_pos = current_pos
@@ -266,12 +265,11 @@ class Solver:
                     remaining_targets.remove(current_pos)
                     break
 
-                # Explore neighbors
                 for next_pos in get_available_directions(initial_state, current_pos):
                     if next_pos not in visited:
-                        new_g = g + 1  # Uniform cost of 1 for each step
+                        new_g = g + 1  
                         heapq.heappush(open_list, (
-                            new_g + self.a_star_heuristic(next_pos, closest_target),  # f = g + h
+                            new_g + self.a_star_heuristic(next_pos, closest_target), 
                             new_g,
                             next_pos,
                             current_path + [current_pos]
@@ -288,59 +286,83 @@ class Solver:
 
     @measure_runtime
     def bfs(self):
-        initial_state = self.grid.copy()
-        pellet_map = self.pellet_map.copy()
-        player_pos = self.get_player_coords(initial_state)
-        
-        queue = deque([(player_pos, [])])
-        visited = set()
-        visited.add(player_pos)
-        path = []
+        initial_state = self.grid.copy()  
+        pellet_map = self.pellet_map.copy()  
+        player_pos = self.get_player_coords(initial_state) 
+    
+        total_path = [] 
+        remaining_targets = set(pellet_map)  
 
-        while queue:
-            current_pos, current_path = queue.popleft()
+        while remaining_targets:
+            queue = deque([(player_pos, [])])  
+            visited = set()  
+            visited.add(player_pos)  
+            found_target = False  
 
-            if current_pos in pellet_map:
-                pellet_map.remove(current_pos)
-                path.extend(current_path + [current_pos])
-                if not pellet_map:
+            while queue:
+                current_pos, current_path = queue.popleft()
+
+                if current_pos in remaining_targets:
+                    total_path.extend(current_path + [current_pos])  
+                    player_pos = current_pos  
+                    remaining_targets.remove(current_pos) 
+                    found_target = True  
                     break
 
-            for neighbor in get_available_directions(initial_state, current_pos):
-                if neighbor not in visited:
-                    visited.add(neighbor)
-                    queue.append((neighbor, current_path + [neighbor]))
-        
-        path = [[int(pos[0]), int(pos[1])] for pos in path]
-        return {"solution": path}
+                for neighbor in get_available_directions(initial_state, current_pos):
+                    if neighbor not in visited:
+                        visited.add(neighbor)  
+                        queue.append((neighbor, current_path + [neighbor]))  
+
+            if not found_target:
+                break
+
+        total_path = [[int(pos[0]), int(pos[1])] for pos in total_path]
+        return {
+        'unreachable_targets': None if not remaining_targets else list(remaining_targets),
+        'solution': total_path
+    }
+
 
     @measure_runtime
     def dfs(self):
-        initial_state = self.grid.copy()
-        pellet_map = self.pellet_map.copy()
-        player_pos = self.get_player_coords(initial_state)
-        
-        stack = [(player_pos, [])]
-        visited = set()
-        visited.add(player_pos)
-        path = []
+        initial_state = self.grid.copy() 
+        pellet_map = self.pellet_map.copy()  
+        player_pos = self.get_player_coords(initial_state)  
+    
+        total_path = []  
+        remaining_targets = set(pellet_map)  
 
-        while stack:
-            current_pos, current_path = stack.pop()
+        while remaining_targets:
+            stack = [(player_pos, [])]  
+            visited = set()  
+            visited.add(player_pos)  
+            found_target = False  
 
-            if current_pos in pellet_map:
-                pellet_map.remove(current_pos)
-                path.extend(current_path + [current_pos])
-                if not pellet_map:
+            while stack:
+                current_pos, current_path = stack.pop()
+
+                if current_pos in remaining_targets:
+                    total_path.extend(current_path + [current_pos]) 
+                    player_pos = current_pos  
+                    remaining_targets.remove(current_pos)  
+                    found_target = True 
                     break
 
-            for neighbor in get_available_directions(initial_state, current_pos):
-                if neighbor not in visited:
-                    visited.add(neighbor)
-                    stack.append((neighbor, current_path + [neighbor]))
-        
-        path = [[int(pos[0]), int(pos[1])] for pos in path]
-        return {"solution": path}
+                for neighbor in get_available_directions(initial_state, current_pos):
+                    if neighbor not in visited:
+                        visited.add(neighbor) 
+                        stack.append((neighbor, current_path + [neighbor]))  
+
+            if not found_target:
+                break
+
+        total_path = [[int(pos[0]), int(pos[1])] for pos in total_path]
+        return {
+        'unreachable_targets': None if not remaining_targets else list(remaining_targets),
+        'solution': total_path
+    }
+
 
 
 if __name__ == "__main__":
